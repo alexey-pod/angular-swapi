@@ -1,0 +1,1 @@
+<table tr-ng-grid items="items" fields="fields" page-items="15"></table>

@@ -1,0 +1,136 @@
+(function() {
+  angular.module('ne.swapi', []);
+})();
+
+(function() {
+	angular.module('ne.swapi')
+		.constant('endpoints', endpoints());
+
+	function endpoints() {
+		var root = 'https://swapi.co/api/',
+			people = 'people/',
+			films = 'films/',
+			starships = 'starships/',
+			vehicles = 'vehicles/',
+			species = 'species/',
+			planets = 'planets/';
+
+		return {
+			ROOT: root,
+			PEOPLE: root + people,
+			FILMS: root + films,
+			STARSHIPS: root + starships,
+			VEHICLES: root + vehicles,
+			SPECIES: root + species,
+			PLANETS: root + planets
+		};
+	}
+
+})();
+
+(function() {
+	angular.module('ne.swapi')
+		.factory('swapi', swapi);
+
+	swapi.$inject = ['$http', '$q', 'endpoints', 'DataCache'];
+	function swapi($http, $q, endpoints, DataCache) {
+		var service = {
+			get: get,
+			films: generateInterface(endpoints.FILMS),
+			people: generateInterface(endpoints.PEOPLE),
+			planets: generateInterface(endpoints.PLANETS),
+			species: generateInterface(endpoints.SPECIES),
+			starships: generateInterface(endpoints.STARSHIPS),
+			vehicles: generateInterface(endpoints.VEHICLES)
+		};
+
+		return service;
+
+		function generateInterface(url) {
+		  return {
+			all: getAll(url),
+			id: getRecord(url),
+			get: function() { return get(url);},
+			page: getPaged(url),
+			schema: getSchema(url)
+		  };
+		}
+
+		function get(url) {
+			return $http.get(url)
+			.then(function(response) {
+				return response.data;
+			})
+			.catch(function(error) {
+				$q.reject(error);
+			});
+		}
+
+		function getAll(url) {
+			
+			return function() {
+				var deferred = $q.defer(),
+				results = [];
+
+				var data = DataCache.get(url);
+
+				if(data){
+					return data;
+				}
+				
+				fetchRecords(url);
+				
+				return deferred.promise.then(function(){
+					DataCache.put(url, {count: results.length, results: results});
+					return {count: results.length, results: results};
+				});
+				
+				function fetchRecords(url) {
+					get(url)
+					.then(function(data) {
+						results = results.concat(data.results);
+						if (typeof data.next === 'string') {
+							fetchRecords(data.next);
+						} else {
+							deferred.resolve({count: results.length, results: results});
+						}
+					})
+					.catch(function(error) {
+						deferred.reject(error);
+					});
+				}
+			};
+		}
+
+		function getRecord(url) {
+			return function(id) {
+				return get( url + (id || '1') + '/' );
+			};
+		}
+
+		function getPaged(url) {
+			return function(page) {
+				return get( url + '?page=' + (page || '') );
+			};
+		}
+
+		function getSchema(url) {
+			return function() {
+				return get( url + 'schema');
+			};
+		}
+	}
+
+})();
+
+(function() {
+	angular.module('ne.swapi')
+		.factory('DataCache', DataCache);
+	
+	DataCache.$inject = ['$cacheFactory'];
+		
+	function DataCache($cacheFactory) {
+		return $cacheFactory('dataCache', {});
+	}
+	
+})();

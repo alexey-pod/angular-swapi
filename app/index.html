@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" ng-app='app' ng-controller="mainCtrl">
+<head>
+	<meta charset="UTF-8">
+	<title ng-bind-template="{{ page.title() }}"></title>
+	<!--bower:css-->
+	<!--endinject-->
+	<!--inject:css-->
+	<!--endinject-->
+</head>
+<body>
+	<base href="/">
+	
+	<div ng-if="page.page_load()" class="overlay" id="overlay" style="display:none_;"></div>
+	<div ng-if="page.page_load()" id="page_form_preloader" class="page_form_preloader" style="display: block_;">
+		<div class="bg"></div>
+		<div class="preloader"></div>
+	</div>
+	
+	<div class="body-wrap-all">
+		<div class="body-wrap">
+			<div class="top_menu_container">
+				<ul class="top_menu">
+					<li ng-repeat="item in page.page_array()" ng-class="{selected: item.id==page.id()}">
+						<a href="{{item.url}}">{{item.name}}</a>
+					</li>
+				</ul>
+			</div>
+			<div class="hr">&nbsp;</div>
+			<div class="page_content">
+				<div ui-view></div>
+			</div>
+			<div class="rasporka"></div>
+		</div>
+	</div>
+	<!--bower:js-->
+	<!--endinject-->
+	<!--inject:js-->
+	<!--endinject-->
+</body>
+</html>
